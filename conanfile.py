@@ -8,17 +8,18 @@ class BstyConan(ConanFile):
     author = "Rui Pires rui@sennin.pt"
     url = "github.com/ruipires/bsty"
     description = "Bank Statements To YNAB (converter)"
-    topics = ("<Put some tag here>", "<here>", "<and here>")
+    topics = ("bank", "finance", "importer", "converter")
     settings = "os", "compiler", "build_type", "arch"
     options = {"shared": [True, False]}
     default_options = {"shared": False}
     generators = "cmake"
 
     def requirements(self):
-        self.requires("spdlog/1.8.0")
-        self.requires("nlohmann_json/3.9.1")
-        self.requires("fast-cpp-csv-parser/20191004")
-        self.requires("freexl/1.0.6")
+        self.requires("spdlog/1.8.0")  # https://github.com/gabime/spdlog
+        self.requires("nlohmann_json/3.9.1")  # https://github.com/nlohmann/json
+        self.requires("fast-cpp-csv-parser/20191004")  # https://github.com/ben-strasser/fast-cpp-csv-parser
+        self.requires("freexl/1.0.6")  # https://www.gaia-gis.it/fossil/freexl/index
+        self.requires("cxxopts/2.2.1")  # https://github.com/jarro2783/cxxopts
 
     def build(self):
         cmake = CMake(self)

@@ -5,14 +5,19 @@
 
 Configuration::Configuration(char const *filename)
 {
+    spdlog::trace("Configuration loading data from: {}", filename);
     std::ifstream input(filename);
 
     if(input)
     {
         input >> data;
     }
+    else
+    {
+        spdlog::trace("Unable to open configuration file");
+    }
 
-    spdlog::trace("Configuration data: {}", to_string());
+    spdlog::trace("Configuration data loaded: {}", to_string());
 }
 
 std::string Configuration::to_string() const
