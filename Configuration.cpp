@@ -3,6 +3,8 @@
 #include <fstream>
 #include <sstream>
 
+using json = nlohmann::json;
+
 Configuration::Configuration()
 {
 }
@@ -31,6 +33,10 @@ bool Configuration::load(char const *filename)
 
     if(input)
     {
+        bool const allow_exceptions = true;
+        bool const ignore_comments = true;
+        data = json::parse(input, nullptr, allow_exceptions, ignore_comments);
+
         input >> data;
     }
     else
@@ -50,9 +56,17 @@ void Configuration::generate_skeleton_to(std::string const &filename) const
     if(out)
     {
         spdlog::trace("Generating configuration skeleton file in {}", filename);
-        out << "{\n";
-        out << "    \"data folder\": \"data\"\n";
-        out << "}\n";
+
+        out << R"raw({
+  "data folder": "data",
+  "accounts": {
+//    "cgd ordenado": {
+//      "folder": "cgd_ordenado",
+//      "type": "cgd checking account",
+//      "format": "csv"
+//    }
+  }
+})raw";
         spdlog::trace("Skeleton file generation complete");
     }
     else
