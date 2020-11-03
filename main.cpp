@@ -33,14 +33,15 @@ int main(int argc, char **argv)
             spdlog::trace("Verbose mode enabled");
         }
 
+        Configuration cfg;
         if(generateConfig)
         {
             spdlog::info("Generating configuration file to {}", configurationFile);
-            spdlog::error("Configuration generation not implemented yet");
+            cfg.generate_skeleton_to(configurationFile);
         }
         else
         {
-            Configuration cfg(configurationFile.c_str());
+            cfg.load(configurationFile);
 
             if(cfg)
                 spdlog::trace("Configuration data ok");

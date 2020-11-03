@@ -3,7 +3,28 @@
 #include <fstream>
 #include <sstream>
 
-Configuration::Configuration(char const *filename)
+Configuration::Configuration()
+{
+}
+
+std::string Configuration::to_string() const
+{
+    std::stringstream out;
+    out << data.dump(4);
+    return out.str();
+}
+
+Configuration::operator bool() const
+{
+    return !data.is_null() && !data.empty();
+}
+
+bool Configuration::load(std::string const& filename)
+{
+    return load(filename.c_str());
+}
+
+bool Configuration::load(char const *filename)
 {
     spdlog::trace("Configuration loading data from: {}", filename);
     std::ifstream input(filename);
@@ -18,18 +39,26 @@ Configuration::Configuration(char const *filename)
     }
 
     spdlog::trace("Configuration data loaded: {}", to_string());
+
+    return operator bool();
 }
 
-std::string Configuration::to_string() const
+void Configuration::generate_skeleton_to(std::string const &filename) const
 {
-    std::stringstream out;
-    out << data.dump(4);
-    return out.str();
-}
+    std::ofstream out(filename);
 
-Configuration::operator bool() const
-{
-    return !data.is_null() && !data.empty();
+    if(out)
+    {
+        spdlog::trace("Generating configuration skeleton file in {}", filename);
+        out << "{\n";
+        out << "    \"data folder\": \"data\"\n";
+        out << "}\n";
+        spdlog::trace("Skeleton file generation complete");
+    }
+    else
+    {
+        spdlog::trace("Unable to open {} for writing, could not generate skeleton file", filename);
+    }
 }
 
 std::string to_string(Configuration const &cfg)

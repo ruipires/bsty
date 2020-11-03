@@ -6,7 +6,12 @@
 class Configuration
 {
     public:
-        explicit Configuration(char const * filename);
+        Configuration();
+
+        bool load(std::string const& filename);
+        bool load(char const* filename);
+
+        void generate_skeleton_to(std::string const& filename) const;
 
         explicit operator bool() const;
         std::string to_string() const;
