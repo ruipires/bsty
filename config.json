@@ -1,3 +1,10 @@
 {
-  "data folder": "data"
+  "data folder": "data",
+  "accounts": {
+    "cgd ordenado": {
+      "folder": "cgd_ordenado",
+      "type": "cgd checking account",
+      "format": "csv"
+    }
+  }
 }

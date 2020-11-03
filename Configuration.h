@@ -13,6 +13,8 @@ class Configuration
 
         void generate_skeleton_to(std::string const& filename) const;
 
+        std::vector<std::string> account_list() const;
+
         explicit operator bool() const;
         std::string to_string() const;
 

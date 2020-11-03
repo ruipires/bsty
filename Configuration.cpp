@@ -61,6 +61,19 @@ void Configuration::generate_skeleton_to(std::string const &filename) const
     }
 }
 
+std::vector<std::string> Configuration::account_list() const
+{
+    std::vector<std::string> result;
+
+    if (data.contains("accounts"))
+        for (auto& [key, value] : data.find("accounts")->items())
+        {
+            result.push_back(key);
+        }
+
+    return result;
+}
+
 std::string to_string(Configuration const &cfg)
 {
     return cfg.to_string();

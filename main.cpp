@@ -2,6 +2,8 @@
 #include <cxxopts.hpp>
 #include "Configuration.h"
 
+void process_accounts(Configuration const& cfg);
+
 int main(int argc, char **argv)
 {
     spdlog::info("Initializing");
@@ -44,7 +46,10 @@ int main(int argc, char **argv)
             cfg.load(configurationFile);
 
             if(cfg)
+            {
                 spdlog::trace("Configuration data ok");
+                process_accounts(cfg);
+            }
             else
                 spdlog::error("Error loading configuration data from {}", configurationFile);
         }
@@ -56,5 +61,23 @@ int main(int argc, char **argv)
     catch(...)
     {
         spdlog::error("Something went wrong, caught an unknown exception");
+    }
+}
+
+void process_accounts(Configuration const& cfg)
+{
+    auto const accounts = cfg.account_list();
+    spdlog::trace("Processing the following accounts [{}]", fmt::join(accounts, ", "));
+
+    if(accounts.empty())
+    {
+        spdlog::error("No accounts defined in the configuration file");
+        return;
+    }
+
+    for(auto const& account: accounts)
+    {
+        spdlog::info("Processing account {}", account);
+
     }
 }
