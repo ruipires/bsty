@@ -5,8 +5,21 @@
 
 using json = nlohmann::json;
 
-Configuration::Configuration()
+namespace config
 {
+    void to_json(nlohmann::json &j, Account const& a)
+    {
+        j = nlohmann::json{{"folder", a.folder},
+                           {"type",   a.type},
+                           {"format", a.format}};
+    }
+
+    void from_json(nlohmann::json const& j, Account &a)
+    {
+        j.at("folder").get_to(a.folder);
+        j.at("type").get_to(a.type);
+        j.at("format").get_to(a.format);
+    }
 }
 
 std::string Configuration::to_string() const
@@ -36,8 +49,6 @@ bool Configuration::load(char const *filename)
         bool const allow_exceptions = true;
         bool const ignore_comments = true;
         data = json::parse(input, nullptr, allow_exceptions, ignore_comments);
-
-        input >> data;
     }
     else
     {
@@ -49,7 +60,7 @@ bool Configuration::load(char const *filename)
     return operator bool();
 }
 
-void Configuration::generate_skeleton_to(std::string const &filename) const
+void Configuration::generate_skeleton_to(std::string const &filename)
 {
     std::ofstream out(filename);
 
@@ -83,6 +94,21 @@ std::vector<std::string> Configuration::account_list() const
         for (auto& [key, value] : data.find("accounts")->items())
         {
             result.push_back(key);
+        }
+
+    return result;
+}
+
+std::vector<std::tuple<std::string, config::Account>> Configuration::accounts() const
+{
+    std::vector<std::tuple<std::string, config::Account>> result;
+
+    if (data.contains("accounts"))
+        for (auto& [key, value] : data.find("accounts")->items())
+        {
+            config::Account account;
+            from_json(value, account);
+            result.emplace_back(key, account);
         }
 
     return result;

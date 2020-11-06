@@ -1,8 +1,10 @@
+#include <filesystem>
 #include <spdlog/spdlog.h>
 #include <cxxopts.hpp>
 #include "Configuration.h"
 
 void process_accounts(Configuration const& cfg);
+void process_account(std::string const& name, config::Account const& account);
 
 int main(int argc, char **argv)
 {
@@ -25,7 +27,7 @@ int main(int argc, char **argv)
             exit(0);
         }
 
-        auto const configurationFile = result["config"].as<std::string>();
+        std::string const configurationFile = result["config"].as<std::string>();
         auto const generateConfig = result["generate"].as<bool>();
         auto const verbose = result["verbose"].as<bool>();
 
@@ -35,14 +37,14 @@ int main(int argc, char **argv)
             spdlog::trace("Verbose mode enabled");
         }
 
-        Configuration cfg;
         if(generateConfig)
         {
             spdlog::info("Generating configuration file to {}", configurationFile);
-            cfg.generate_skeleton_to(configurationFile);
+            Configuration::generate_skeleton_to(configurationFile);
         }
         else
         {
+            Configuration cfg;
             cfg.load(configurationFile);
 
             if(cfg)
@@ -66,8 +68,10 @@ int main(int argc, char **argv)
 
 void process_accounts(Configuration const& cfg)
 {
-    auto const accounts = cfg.account_list();
-    spdlog::trace("Processing the following accounts [{}]", fmt::join(accounts, ", "));
+    auto const accounts = cfg.accounts();
+    std::vector<std::string> names;
+    std::for_each(accounts.begin(), accounts.end(), [&names](auto &i){ names.push_back(std::get<0>(i)); });
+    spdlog::trace("Processing the following accounts [{}]", fmt::join(names, ", "));
 
     if(accounts.empty())
     {
@@ -75,9 +79,19 @@ void process_accounts(Configuration const& cfg)
         return;
     }
 
-    for(auto const& account: accounts)
-    {
-        spdlog::info("Processing account {}", account);
+    for(auto const& [name, account]: accounts)
+        process_account(name, account);
+}
 
+void process_account(std::string const& name, config::Account const& account)
+{
+    namespace fs = std::filesystem;
+    spdlog::info("Processing account {}", name);
+
+    auto const dir = account.folder;
+
+    for (auto const& entry : fs::directory_iterator(dir))
+    {
+        spdlog::info("* loading {}", entry.path().filename().string());
     }
 }
