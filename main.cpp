@@ -2,6 +2,7 @@
 #include <spdlog/spdlog.h>
 #include <cxxopts.hpp>
 #include "Configuration.h"
+#include "cgd/ContaOrdem.h"
 
 void process_accounts(Configuration const& cfg);
 void process_account(std::string const& name, config::Account const& account);
@@ -92,6 +93,11 @@ void process_account(std::string const& name, config::Account const& account)
 
     for (auto const& entry : fs::directory_iterator(dir))
     {
-        spdlog::info("* loading {}", entry.path().filename().string());
+        auto const filename = entry.path().filename().string();
+        auto const fullpath = entry.path().string();
+        spdlog::info("* loading {}", filename);
+        spdlog::trace("  * fullpath:{}", fullpath);
+
+        cgd::ContaOrdem::load_csv(fullpath);
     }
 }
