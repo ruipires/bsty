@@ -72,7 +72,9 @@ void process_accounts(Configuration const& cfg)
     auto const accounts = cfg.accounts();
     std::vector<std::string> names;
     std::for_each(accounts.begin(), accounts.end(), [&names](auto &i){ names.push_back(std::get<0>(i)); });
-    spdlog::trace("Processing the following accounts [{}]", fmt::join(names, ", "));
+
+    auto msg=fmt::format("Processing the following accounts [{}]", fmt::join(names, ", "));
+    spdlog::trace(msg);
 
     if(accounts.empty())
     {
