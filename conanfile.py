@@ -21,7 +21,6 @@ class BstyConan(ConanFile):
         self.requires("freexl/1.0.6")  # https://www.gaia-gis.it/fossil/freexl/index
         self.requires("cxxopts/2.2.1")  # https://github.com/jarro2783/cxxopts
         self.requires("date/3.0.0") # https://github.com/HowardHinnant/date
-        self.requires("icu/68.1") # https://unicode-org.github.io/icu/
         self.requires("catch2/2.13.3") # https://github.com/catchorg/Catch2
 
     def build(self):

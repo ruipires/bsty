@@ -28,7 +28,7 @@ void cgd::ContaOrdem::load_csv(std::string const &filename)
 
         while(in.read_row(raw_date_mov, raw_date_val, desc, outflow, inflow, balance, available_balance, categoria))
         {
-            //spdlog::trace("* row {{ date='{}', payee='{}', memo='{}' outflow='{}', inflow='{}' }}");
+            spdlog::trace("* row {{ date='{}', payee='{}', memo='{}' outflow='{}', inflow='{}' }}");
         }
     }
     catch (std::exception const& e)
@@ -39,4 +39,9 @@ void cgd::ContaOrdem::load_csv(std::string const &filename)
     {
         spdlog::error("Failed loading {} from {}, due to an unknown exception.", kind, filename);
     }
+}
+
+std::string cgd::cleanup_cgd_co_file(std::string const &data)
+{
+    return std::string();
 }
