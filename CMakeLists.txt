@@ -5,29 +5,39 @@ project(bsty CXX)
 include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
 conan_basic_setup(TARGETS)
 
-add_library(bsty_core
+add_library(bsty_text_conversion OBJECT
+        util/CodePageToUtf8Conterter.cpp util/CodePageToUtf8Conterter.h
+        )
+target_include_directories(bsty_text_conversion PUBLIC .)
+
+target_link_libraries(bsty_text_conversion PUBLIC
+        CONAN_PKG::icu
+        CONAN_PKG::spdlog
+        )
+
+add_executable(bsty main.cpp
         Configuration.cpp Configuration.h
         cgd/ContaOrdem.cpp cgd/ContaOrdem.h)
 
-target_link_libraries(bsty_core PUBLIC
+target_link_libraries(bsty PRIVATE
         CONAN_PKG::cxxopts
         CONAN_PKG::nlohmann_json
         CONAN_PKG::fast-cpp-csv-parser
         CONAN_PKG::spdlog
+        bsty_text_conversion
         )
-
-add_executable(bsty
-        main.cpp)
-
-target_link_libraries(bsty PRIVATE bsty_core)
 
 add_executable(ut
-        ut/main.cpp ut/cgd.ContaOrdem.ut.cpp)
+        ut/main.cpp
+        ut/CodePageToUtf8Converter.ut.cpp)
 
-target_include_directories(ut PRIVATE .)
+configure_file(ut/windows-1252.sample.txt ${CMAKE_BINARY_DIR} COPYONLY)
+configure_file(${CONAN_RES_DIRS_ICU}/icudt68l.dat ${CMAKE_BINARY_DIR} COPYONLY)
 
 target_link_libraries(ut PRIVATE
-        bsty_core
+        bsty_text_conversion
         CONAN_PKG::catch2
         )
+
+target_link_libraries(bsty PRIVATE ${CONAN_LIBS})
 
