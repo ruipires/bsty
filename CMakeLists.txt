@@ -6,7 +6,7 @@ include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
 conan_basic_setup(TARGETS)
 
 add_library(bsty_text_conversion OBJECT
-        util/CodePageToUtf8Conterter.cpp util/CodePageToUtf8Conterter.h
+        util/CodePageToUtf8Converter.cpp util/CodePageToUtf8Converter.h
         )
 target_include_directories(bsty_text_conversion PUBLIC .)
 
