@@ -5,7 +5,9 @@
 
 std::string CodePageToUtf8Converter::fromCp1252(std::string const &in)
 {
-    icu::UnicodeString us(in.data(), static_cast<int32_t>(in.size()), "cp1252");
+    char const * data = in.data();
+    int32_t const size = static_cast<int32_t>(in.size());
+    icu::UnicodeString us(data, size, "cp1252");
 
     std::string result;
     icu::StringByteSink<std::string> sink(&result);
