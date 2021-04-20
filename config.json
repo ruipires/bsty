@@ -2,7 +2,7 @@
   "data folder": "data",
   "accounts": {
     "cgd ordenado": {
-      "folder": "D:\\fin\\bsty\\cgd_co",
+      "folder": "F:\\fin\\bsty\\cgd_co",
       "type": "cgd checking account",
       "format": "csv"
     }

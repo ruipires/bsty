@@ -38,6 +38,3 @@ target_link_libraries(ut PRIVATE
         bsty_text_conversion
         CONAN_PKG::catch2
         )
-
-target_link_libraries(bsty PRIVATE ${CONAN_LIBS})
-

@@ -24,7 +24,8 @@ class BstyConan(ConanFile):
 
         # header-only library for reading comma separated value (CSV) files
         # https://github.com/ben-strasser/fast-cpp-csv-parser
-        self.requires("fast-cpp-csv-parser/20191004")
+        #self.requires("fast-cpp-csv-parser/20191004")
+        self.requires("fast-cpp-csv-parser/cci.20200830")
 
         # https://www.gaia-gis.it/fossil/freexl/index
         #self.requires("freexl/1.0.6")
