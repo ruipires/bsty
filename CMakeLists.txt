@@ -24,6 +24,7 @@ target_link_libraries(bsty PRIVATE
         CONAN_PKG::nlohmann_json
         CONAN_PKG::fast-cpp-csv-parser
         CONAN_PKG::spdlog
+        CONAN_PKG::date
         bsty_text_conversion
         )
 
