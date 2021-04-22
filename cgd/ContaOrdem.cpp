@@ -1,9 +1,9 @@
 #include "ContaOrdem.h"
 #include "util/CodePageToUtf8Converter.h"
+#include "util/DateParser.h"
 
 #include <spdlog/spdlog.h>
 #include <fast-cpp-csv-parser/csv.h>
-#include <date/date.h>
 
 #include <fstream>
 #include <sstream>
@@ -53,25 +53,25 @@ void cgd::ContaOrdem::load_csv(std::string const& filename, std::istream &in_fil
         spdlog::trace("Skipping over line #{}, contents:\"{}\"", i, tmp);
     }
 
-    //io::CSVReader<8> in(filename, in_file);
     io::CSVReader<8, io::trim_chars<' ', '\t'>, io::no_quote_escape<';'>> in(filename, in_file);;
     in.read_header(io::ignore_extra_column, "Data mov.", "Data valor", "Descrição", "Débito", "Crédito", "Saldo contabilístico", "Saldo disponível", "Categoria");
 
     std::string raw_date_mov, raw_date_val, desc, outflow, inflow, balance, available_balance, category;
 
+    DateParser parser;
     while(in.read_row(raw_date_mov, raw_date_val, desc, outflow, inflow, balance, available_balance, category))
     {
         spdlog::trace(
                 "* row {{ date_mov='{}', date_val='{}', desc='{}' outflow='{}', inflow='{}', balance='{}', available_balance='{}', category='{}' }}",
                 raw_date_mov, raw_date_val, desc, outflow, inflow, balance, available_balance, category);
 
-        // parse dates - https://stackoverflow.com/a/41613816
-
-        std::istringstream date{raw_date_mov};
-        date::sys_time<date::days> tp;
-        date >> date::parse("%d-%m-%Y", tp);
-        date::year_month_day x{tp};
-        spdlog::trace("** raw_date={} => year:{} month:{} day:{}", raw_date_mov, int(x.year()), unsigned(x.month()),
-                      unsigned(x.day()));
+        if(auto date = parser.parse(raw_date_mov))
+        {
+            spdlog::trace("** year:{} month:{} day:{}", date->year, date->month, date->day);
+        }
+        else
+        {
+            spdlog::error("!invalid date! \"{}\"", raw_date_mov);
+        }
     }
 }

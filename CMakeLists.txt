@@ -5,14 +5,15 @@ project(bsty CXX)
 include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
 conan_basic_setup(TARGETS)
 
-add_library(bsty_text_conversion OBJECT
+add_library(bsty_util OBJECT
         util/CodePageToUtf8Converter.cpp util/CodePageToUtf8Converter.h
-        )
-target_include_directories(bsty_text_conversion PUBLIC .)
+        util/DateParser.cpp util/DateParser.h)
+target_include_directories(bsty_util PUBLIC .)
 
-target_link_libraries(bsty_text_conversion PUBLIC
+target_link_libraries(bsty_util PUBLIC
         CONAN_PKG::icu
         CONAN_PKG::spdlog
+        CONAN_PKG::date
         )
 
 add_executable(bsty main.cpp
@@ -24,18 +25,17 @@ target_link_libraries(bsty PRIVATE
         CONAN_PKG::nlohmann_json
         CONAN_PKG::fast-cpp-csv-parser
         CONAN_PKG::spdlog
-        CONAN_PKG::date
-        bsty_text_conversion
+        bsty_util
         )
 
 add_executable(ut
         ut/main.cpp
-        ut/CodePageToUtf8Converter.ut.cpp)
+        ut/CodePageToUtf8Converter.ut.cpp ut/DateParser.ut.cpp)
 
 configure_file(ut/windows-1252.sample.txt ${CMAKE_BINARY_DIR} COPYONLY)
 configure_file(${CONAN_RES_DIRS_ICU}/icudt68l.dat ${CMAKE_BINARY_DIR} COPYONLY)
 
 target_link_libraries(ut PRIVATE
-        bsty_text_conversion
+        bsty_util
         CONAN_PKG::catch2
         )
