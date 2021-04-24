@@ -5,6 +5,8 @@ project(bsty CXX)
 include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
 conan_basic_setup(TARGETS)
 
+add_subdirectory(core)
+
 add_library(bsty_util OBJECT
         util/CodePageToUtf8Converter.cpp util/CodePageToUtf8Converter.h
         util/DateParser.cpp util/DateParser.h)
@@ -14,6 +16,7 @@ target_link_libraries(bsty_util PUBLIC
         CONAN_PKG::icu
         CONAN_PKG::spdlog
         CONAN_PKG::date
+        bsty_core
         )
 
 add_executable(bsty main.cpp

@@ -8,14 +8,15 @@
 #include <fstream>
 #include <sstream>
 
-
 namespace
 {
     char const * const kind = "CGD - Conta Ordem";
 }
 
-void cgd::ContaOrdem::load_csv(std::string const &filename)
+bsty::core::Data cgd::ContaOrdem::loadCsv(std::string const &filename)
 {
+    bsty::core::Data result;
+
     spdlog::trace("Loading {} from {}.", kind, filename);
 
     try
@@ -32,7 +33,7 @@ void cgd::ContaOrdem::load_csv(std::string const &filename)
                       fileContents.size(), utf8FileContents.size());
 
         std::stringstream utf8Stream(utf8FileContents);
-        load_csv(filename, utf8Stream);
+        result = loadCsv(filename, utf8Stream);
     }
     catch (std::exception const& e)
     {
@@ -42,10 +43,13 @@ void cgd::ContaOrdem::load_csv(std::string const &filename)
     {
         spdlog::error("Failed loading {} from {}, due to an unknown exception.", kind, filename);
     }
+
+    return result;
 }
 
-void cgd::ContaOrdem::load_csv(std::string const& filename, std::istream &in_file)
+bsty::core::Data cgd::ContaOrdem::loadCsv(std::string const& filename, std::istream &in_file)
 {
+    bsty::core::Data result;
     std::string tmp;
     for(int i = 0; i != 6; ++i)
     {
@@ -59,6 +63,7 @@ void cgd::ContaOrdem::load_csv(std::string const& filename, std::istream &in_fil
     std::string raw_date_mov, raw_date_val, desc, outflow, inflow, balance, available_balance, category;
 
     DateParser parser;
+    std::string const payee;
     while(in.read_row(raw_date_mov, raw_date_val, desc, outflow, inflow, balance, available_balance, category))
     {
         spdlog::trace(
@@ -68,10 +73,35 @@ void cgd::ContaOrdem::load_csv(std::string const& filename, std::istream &in_fil
         if(auto date = parser.parse(raw_date_mov))
         {
             spdlog::trace("** year:{} month:{} day:{}", date->year, date->month, date->day);
+
+            bsty::core::Date const transactionDate(date->year, date->month, date->day);
+            // TODO read currency unit from file
+            bsty::core::Money const outflowMoney(outflow, "EUR");
+            bsty::core::Money const inflowMoney(inflow, "EUR");
+
+            bsty::core::Row row(transactionDate, payee, desc, outflowMoney, inflowMoney);
+            result.add(row);
         }
         else
         {
             spdlog::error("!invalid date! \"{}\"", raw_date_mov);
         }
     }
+
+    return result;
+}
+
+cgd::ContaOrdem cgd::ContaOrdem::loadFromCsv(std::string const &filename)
+{
+    return ContaOrdem(loadCsv(filename));
+}
+
+bsty::core::Data const &cgd::ContaOrdem::getData() const
+{
+    return data;
+}
+
+cgd::ContaOrdem::ContaOrdem(bsty::core::Data data)
+    :data(data)
+{
 }
