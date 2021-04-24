@@ -100,6 +100,15 @@ void process_account(std::string const& name, config::Account const& account)
         spdlog::info("* loading {}", filename);
         spdlog::trace("  * fullpath:{}", fullpath);
 
-        cgd::ContaOrdem::load_csv(fullpath);
+        auto data = cgd::ContaOrdem::loadFromCsv(fullpath);
+
+        for(auto const& row: data.getData().getRows())
+        {
+            spdlog::info("* date:'{}', payee:'{}' desc:'{}', in:'{}', out:'{}'",
+                         to_string(row.date),
+                         row.payee,
+                         row.memo,
+                         to_string(row.inflow),
+                         to_string(row.outflow)); }
     }
 }
