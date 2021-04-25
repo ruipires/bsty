@@ -64,27 +64,52 @@ bsty::core::Data cgd::ContaOrdem::loadCsv(std::string const& filename, std::istr
 
     DateParser parser;
     std::string const payee;
+    bool processingFileEnding = false;
     while(in.read_row(raw_date_mov, raw_date_val, desc, outflow, inflow, balance, available_balance, category))
     {
-        spdlog::trace(
-                "* row {{ date_mov='{}', date_val='{}', desc='{}' outflow='{}', inflow='{}', balance='{}', available_balance='{}', category='{}' }}",
-                raw_date_mov, raw_date_val, desc, outflow, inflow, balance, available_balance, category);
+        //spdlog::trace(
+        //        "* row {{ date_mov='{}', date_val='{}', desc='{}' outflow='{}', inflow='{}', balance='{}', available_balance='{}', category='{}' }}",
+        //        raw_date_mov, raw_date_val, desc, outflow, inflow, balance, available_balance, category);
 
         if(auto date = parser.parse(raw_date_mov))
         {
-            spdlog::trace("** year:{} month:{} day:{}", date->year, date->month, date->day);
+            if(processingFileEnding)
+            {
+                // after we start processing the last lines of the file,
+                // we should not read any more valid dates.
+                // final lines are in a different format.
+                spdlog::error("Read valid date after an invalid date (was already in processing file ending mode). line was:\"{}\"", raw_date_mov);
+                spdlog::error("parse contents from offending line: {{ date_mov='{}', date_val='{}', desc='{}' outflow='{}', inflow='{}',"
+                              " balance='{}', available_balance='{}', category='{}' }}",
+                              raw_date_mov, raw_date_val, desc, outflow, inflow, balance, available_balance, category);
+                // TODO: mark whole data read as invalid
+            }
+            else
+            {
+                bsty::core::Date const transactionDate(date->year, date->month, date->day);
+                // TODO read currency unit from file
+                bsty::core::Money const outflowMoney(outflow, "EUR");
+                bsty::core::Money const inflowMoney(inflow, "EUR");
 
-            bsty::core::Date const transactionDate(date->year, date->month, date->day);
-            // TODO read currency unit from file
-            bsty::core::Money const outflowMoney(outflow, "EUR");
-            bsty::core::Money const inflowMoney(inflow, "EUR");
-
-            bsty::core::Row row(transactionDate, payee, desc, outflowMoney, inflowMoney);
-            result.add(row);
+                bsty::core::Row row(transactionDate, payee, desc, outflowMoney, inflowMoney);
+                result.add(row);
+            }
         }
         else
         {
-            spdlog::error("!invalid date! \"{}\"", raw_date_mov);
+            if(!processingFileEnding)
+            {
+                // at first invalid date, enter processing file ending mode
+                spdlog::info("Entered processing file ending mode");
+                processingFileEnding = true;
+            }
+        }
+
+        if(processingFileEnding)
+        {
+            spdlog::info("file ending line: {{ date_mov='{}', date_val='{}', desc='{}' outflow='{}', inflow='{}',"
+                         " balance='{}', available_balance='{}', category='{}' }}",
+                         raw_date_mov, raw_date_val, desc, outflow, inflow, balance, available_balance, category);
         }
     }
 
