@@ -5,7 +5,7 @@ namespace bsty::core
 {
     std::string to_string(bsty::core::Date const &date)
     {
-        return fmt::format("{}-{}-{}", date.year, date.month, date.day);
+        return fmt::format("{}-{:02d}-{:02d}", date.year, date.month, date.day);
     }
 
     std::string to_string(Money const &money)
