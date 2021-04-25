@@ -4,82 +4,107 @@
 #include <utility>
 #include <vector>
 #include <string>
+#include <optional>
 
-namespace bsty
+namespace bsty::core
 {
-    namespace core
+    struct Date
     {
-        struct Date
-        {
-            public:
-                inline Date()
-                    :year(0)
-                    ,month(0)
-                    ,day(0)
-                {}
-
-                inline explicit Date(int year, unsigned int month, unsigned int day)
-                    :year(year)
-                    ,month(month)
-                    ,day(day)
-                {}
-
-                int year;
-                unsigned int month;
-                unsigned int day;
-        };
-
-        std::string to_string(Date const& date);
-
-        struct Money
-        {
-            inline explicit Money(std::string amount, std::string currency)
-                :amount(std::move(amount))
-                ,currency(std::move(currency))
+        public:
+            inline Date()
+                :year(0)
+                ,month(0)
+                ,day(0)
             {}
 
-            inline Money()
-                :amount("0")
-                ,currency("EUR")
+            inline explicit Date(int year, unsigned int month, unsigned int day)
+                :year(year)
+                ,month(month)
+                ,day(day)
             {}
 
-            std::string amount;
-            std::string const currency;
-        };
+            int year;
+            unsigned int month;
+            unsigned int day;
+    };
 
-        std::string to_string(Money const& money);
+    std::string to_string(Date const& date);
 
-        struct Row
-        {
-            inline Row()
-            {}
+    struct Money
+    {
+        inline explicit Money(std::string amount, std::string currency)
+            :amount(std::move(amount))
+            ,currency(std::move(currency))
+        {}
 
-            inline explicit Row(Date date, std::string payee, std::string memo, Money outflow, Money inflow)
-                :date(date)
-                ,payee(std::move(payee))
-                ,memo(std::move(memo))
-                ,outflow(std::move(outflow))
-                ,inflow(std::move(inflow))
-            {}
+        inline Money()
+            :amount("0")
+            ,currency("EUR")
+        {}
 
-            Date const date;
-            std::string const payee;
-            std::string const memo;
-            Money const outflow;
-            Money const inflow;
-        };
+        std::string amount;
+        std::string currency;
+    };
 
-        class Data
-        {
-            public:
-                void add(Row row);
-                std::vector<Row> const& getRows() const;
+    std::string to_string(Money const& money);
 
-            private:
-                std::vector<Row> rows;
-        };
+    struct Row
+    {
+        Row() = default;
 
-    }
+        inline explicit Row(Date date, std::string payee, std::string memo, Money outflow, Money inflow)
+            :date(date)
+            ,payee(std::move(payee))
+            ,memo(std::move(memo))
+            ,outflow(std::move(outflow))
+            ,inflow(std::move(inflow))
+        {}
+
+        Date const date;
+        std::string const payee;
+        std::string const memo;
+        Money const outflow;
+        Money const inflow;
+    };
+
+    class Data
+    {
+        public:
+            void add(Row row);
+
+            [[nodiscard]] std::vector<Row> const& getRows() const;
+
+            [[nodiscard]] std::optional<Date> getBeginDate() const;
+            void setBeginDate(Date const& date);
+
+            [[nodiscard]] std::optional<Date> getEndDate() const;
+            void setEndDate(Date const& date);
+
+            [[nodiscard]] std::optional<Date> getReportDate() const;
+            void setReportDate(Date const& date);
+
+            [[nodiscard]] std::optional<std::string> getAccountCode() const;
+            void setAccountCode(std::string const& code);
+
+            [[nodiscard]] std::optional<std::string> getAccountDescription() const;
+            void setAccountDescription(std::string const& description);
+
+            [[nodiscard]] std::optional<Money> getCurrentAccountBalance() const;
+            void setCurrentAccountBalance(Money const& balance);
+
+            [[nodiscard]] std::optional<Money> getCurrentAvailableBalance() const;
+            void setCurrentAvailableBalance(Money const& balance);
+
+        private:
+            std::vector<Row> rows;
+            std::optional<Date> beginDate; ///< beginning date of this statement
+            std::optional<Date> endDate;   ///< ending date of this statement
+            std::optional<Date> reportDate; ///< date this statement was generated
+            std::optional<std::string> accountCode; ///< the number/code of the account this report refers to
+            std::optional<std::string> accountDescription; ///< the description of the account
+            std::optional<Money> currentAccountBalance; ///< The reported account balance at the end of the report (how much is in the account).
+            std::optional<Money> currentAvailableBalance; ///< The reported *available* balance in the account at the end of the report.
+    };
 }
 
 #endif
