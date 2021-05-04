@@ -51,13 +51,15 @@ bsty::core::Data cgd::ContaOrdem::loadCsv(std::string const& filename, std::istr
 {
     bsty::core::Data result;
     std::string tmp;
+
+    // TODO: use loadFileHeader here
     for(int i = 0; i != 6; ++i)
     {
         std::getline(in_file, tmp);
         spdlog::trace("Skipping over line #{}, contents:\"{}\"", i, tmp);
     }
 
-    io::CSVReader<8, io::trim_chars<' ', '\t'>, io::no_quote_escape<';'>> in(filename, in_file);;
+    io::CSVReader<8, io::trim_chars<' ', '\t'>, io::no_quote_escape<';'>> in(filename, in_file);
     in.read_header(io::ignore_extra_column, "Data mov.", "Data valor", "Descrição", "Débito", "Crédito", "Saldo contabilístico", "Saldo disponível", "Categoria");
 
     std::string raw_date_mov, raw_date_val, desc, outflow, inflow, balance, available_balance, category;
@@ -67,10 +69,6 @@ bsty::core::Data cgd::ContaOrdem::loadCsv(std::string const& filename, std::istr
     bool processingFileEnding = false;
     while(in.read_row(raw_date_mov, raw_date_val, desc, outflow, inflow, balance, available_balance, category))
     {
-        //spdlog::trace(
-        //        "* row {{ date_mov='{}', date_val='{}', desc='{}' outflow='{}', inflow='{}', balance='{}', available_balance='{}', category='{}' }}",
-        //        raw_date_mov, raw_date_val, desc, outflow, inflow, balance, available_balance, category);
-
         if(auto date = parser.parse(raw_date_mov))
         {
             if(processingFileEnding)
@@ -82,7 +80,9 @@ bsty::core::Data cgd::ContaOrdem::loadCsv(std::string const& filename, std::istr
                 spdlog::error("parse contents from offending line: {{ date_mov='{}', date_val='{}', desc='{}' outflow='{}', inflow='{}',"
                               " balance='{}', available_balance='{}', category='{}' }}",
                               raw_date_mov, raw_date_val, desc, outflow, inflow, balance, available_balance, category);
-                // TODO: mark whole data read as invalid
+                // mark whole data read as invalid
+                result = bsty::core::Data();
+                break;
             }
             else
             {
@@ -121,12 +121,175 @@ cgd::ContaOrdem cgd::ContaOrdem::loadFromCsv(std::string const &filename)
     return ContaOrdem(loadCsv(filename));
 }
 
+bool cgd::ContaOrdem::loadFileHeader(std::istream &inFile, bsty::core::Data &data)
+{
+    bool success = true;
+
+    std::string line;
+    for(int lineNumber = 0; lineNumber != 6 && success; ++lineNumber)
+    {
+        std::getline(inFile, line);
+
+        success = success && inFile;
+
+        switch(lineNumber)
+        {
+            case 0:
+            {
+                auto value = util::parseCsvHeaderLineStatementDate(line);
+                if(value)
+                {
+                    //data.setReportDate() TODO: method needs to return a Date object
+                }
+
+                break;
+            }
+            case 2:
+            {
+                auto value = util::parseCsvHeaderLineAccountNumberAndDescription(line);
+                if(value)
+                {
+                    data.setAccountCode(value->first);
+                    data.setAccountDescription(value->second);
+                }
+                break;
+            }
+            case 3:
+            {
+                auto value = util::parseCsvHeaderLineBeginningDate(line);
+                if(value)
+                {
+                    //data.setBeginDate() TODO: methods needs to return a date object
+                }
+                break;
+            }
+            case 4:
+            {
+                auto value = util::parseCsvHeaderLineBeginningDate(line);
+                if(value)
+                {
+                    //data.setEndDate() TODO: methods needs to return a date object
+                }
+                break;
+            }
+        }
+    }
+
+
+    return success;
+}
+
 bsty::core::Data const &cgd::ContaOrdem::getData() const
 {
     return data;
 }
 
 cgd::ContaOrdem::ContaOrdem(bsty::core::Data data)
-    :data(data)
+    :data(std::move(data))
 {
+}
+
+std::optional<std::string> cgd::util::parseCsvHeaderLineStatementDate(std::string const &str)
+{
+    std::optional<std::string> result;
+
+    std::string_view sv(str);
+
+    auto pos = sv.find('-');
+
+    if(pos != std::string::npos && (pos + 1 != sv.size()))
+    {
+        auto contents = sv.substr(pos+1);
+        result = cgd::util::trim(contents);
+    }
+
+    return result;
+}
+
+std::optional<std::pair<std::string, std::string>>
+cgd::util::parseCsvHeaderLineAccountNumberAndDescription(std::string const &str)
+{
+    std::optional<std::pair<std::string, std::string>> result;
+
+    std::string_view sv(str);
+
+    auto pos = sv.find(';');
+    auto column1 = sv.substr(pos);
+    column1.remove_prefix(1); // remove ;
+
+    auto field1End = column1.find('-');
+    auto field1 = column1.substr(0, field1End);
+    field1 = cgd::util::trim(field1);
+
+    auto remaining = column1.substr(field1End);
+    remaining.remove_prefix(1); // remove -
+    auto lastFieldPos = remaining.find('-');
+    auto lastField = remaining.substr(lastFieldPos);
+    lastField.remove_prefix(1);
+    lastField = cgd::util::trim(lastField);
+
+    result = std::make_pair(field1, lastField);
+
+    return result;
+}
+
+
+std::optional<std::string> cgd::util::parseCsvHeaderLineBeginningDate(std::string const &str)
+{
+    std::optional<std::string> result;
+
+    std::string_view sv(str);
+
+    auto pos = sv.find(';');
+
+    if(pos != std::string::npos)
+    {
+        auto contents = sv.substr(pos);
+        contents.remove_prefix(1);
+        result = cgd::util::trim(contents);
+    }
+
+    return result;
+}
+
+std::optional<std::string> cgd::util::parseCsvHeaderLineEndingDate(std::string const &str)
+{
+    // TODO: remove code duplication with other parseCsvHeaderLine* methods
+    std::optional<std::string> result;
+
+    std::string_view sv(str);
+
+    auto pos = sv.find(';');
+
+    if(pos != std::string::npos)
+    {
+        auto contents = sv.substr(pos);
+        contents.remove_prefix(1);
+        result = cgd::util::trim(contents);
+    }
+
+    return result;
+}
+
+std::string_view cgd::util::trim_left(std::string_view sv)
+{
+    auto const pos = std::find_if_not(sv.begin(), sv.end(), [](auto ch){ return std::isspace(ch); });
+    auto const count = std::distance(sv.begin(), pos);
+
+    sv.remove_prefix(count);
+    return sv;
+}
+
+std::string_view cgd::util::trim_right(std::string_view sv)
+{
+    auto const pos = std::find_if_not(sv.rbegin(), sv.rend(), [](auto ch){ return std::isspace(ch); });
+    auto const count = std::distance(sv.rbegin(), pos);
+
+    sv.remove_suffix(count);
+    return sv;
+}
+
+std::string_view cgd::util::trim(std::string_view sv)
+{
+    return trim_left(trim_right(sv));
 }
