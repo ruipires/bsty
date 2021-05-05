@@ -13,7 +13,7 @@ TEST_CASE( "csv_header_line_1", "ContaOrdem" )
 
     REQUIRE(result != nullopt);
 
-    CHECK(result.value() == "14-10-2020");
+    CHECK(result.value() == bsty::core::Date(2020,10,14));
 }
 
 TEST_CASE( "csv_header_line_2", "ContaOrdem" )
@@ -34,7 +34,7 @@ TEST_CASE( "csv_header_line_3", "ContaOrdem" )
     auto const result = cgd::util::parseCsvHeaderLineBeginningDate(data);
 
     REQUIRE(result != nullopt);
-    CHECK(result.value() == "01-09-2020");
+    CHECK(result.value() == bsty::core::Date(2020,9,1));
 }
 
 TEST_CASE( "csv_header_line_4", "ContaOrdem" )
@@ -44,7 +44,7 @@ TEST_CASE( "csv_header_line_4", "ContaOrdem" )
     auto const result = cgd::util::parseCsvHeaderLineEndingDate(data);
 
     REQUIRE(result != nullopt);
-    CHECK(result.value() == "30-09-2020");
+    CHECK(result.value() == bsty::core::Date(2020,9,30));
 }
 
 TEST_CASE( "trim_left", "ContaOrdem" )

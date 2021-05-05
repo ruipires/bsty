@@ -24,6 +24,16 @@ namespace bsty::core
                 ,day(day)
             {}
 
+            bool operator==(Date const &rhs) const
+            {
+                return std::tie(year, month, day) == std::tie(rhs.year, rhs.month, rhs.day);
+            }
+
+            bool operator!=(Date const &rhs) const
+            {
+                return !(rhs == *this);
+            }
+
             int year;
             unsigned int month;
             unsigned int day;
