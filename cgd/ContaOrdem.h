@@ -27,10 +27,10 @@ namespace cgd
 
     namespace util
     {
-        std::optional<std::string> parseCsvHeaderLineStatementDate(std::string const& str);
-        std::optional<std::pair<std::string,std::string>> parseCsvHeaderLineAccountNumberAndDescription(std::string const& str);
-        std::optional<std::string> parseCsvHeaderLineBeginningDate(std::string const& str);
-        std::optional<std::string> parseCsvHeaderLineEndingDate(std::string const& str);
+        std::optional<bsty::core::Date> parseCsvHeaderLineStatementDate(std::string_view sv);
+        std::optional<std::pair<std::string,std::string>> parseCsvHeaderLineAccountNumberAndDescription(std::string_view sv);
+        std::optional<bsty::core::Date> parseCsvHeaderLineBeginningDate(std::string_view sv);
+        std::optional<bsty::core::Date> parseCsvHeaderLineEndingDate(std::string_view sv);
 
         std::string_view trim_left(std::string_view sv);
         std::string_view trim_right(std::string_view sv);

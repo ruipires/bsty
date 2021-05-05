@@ -1,5 +1,6 @@
 #include "BstyData.h"
 #include <fmt/core.h>
+#include <ostream>
 
 namespace bsty::core
 {
@@ -8,9 +9,19 @@ namespace bsty::core
         return fmt::format("{}-{:02d}-{:02d}", date.year, date.month, date.day);
     }
 
+    std::ostream& operator<<(std::ostream& out, Date const& date)
+    {
+        return out << to_string(date);
+    }
+
     std::string to_string(Money const &money)
     {
         return money.amount;
+    }
+
+    std::ostream& operator<<(std::ostream& out, Money const& money)
+    {
+        return out << to_string(money);
     }
 
     void Data::add(Row row)

@@ -1,5 +1,6 @@
 #include <filesystem>
 #include <spdlog/spdlog.h>
+#include <fmt/ostream.h>
 #include <cxxopts.hpp>
 #include "Configuration.h"
 #include "cgd/ContaOrdem.h"
@@ -100,9 +101,16 @@ void process_account(std::string const& name, config::Account const& account)
         spdlog::info("* loading {}", filename);
         spdlog::trace("  * fullpath:{}", fullpath);
 
-        auto data = cgd::ContaOrdem::loadFromCsv(fullpath);
+        auto co = cgd::ContaOrdem::loadFromCsv(fullpath);
+        auto const& data = co.getData();
 
-        for(auto const& row: data.getData().getRows())
+        spdlog::info("* account #{} \"{}\", statement taken on {}, covering {} to {}", *data.getAccountCode(),
+                                                                                       *data.getAccountDescription(),
+                                                                                       *data.getReportDate(),
+                                                                                       *data.getBeginDate(),
+                                                                                       *data.getEndDate());
+
+        for(auto const& row: data.getRows())
         {
             spdlog::info("* date:'{}', payee:'{}' desc:'{}', in:'{}', out:'{}'",
                          to_string(row.date),

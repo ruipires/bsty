@@ -5,6 +5,7 @@
 #include <vector>
 #include <string>
 #include <optional>
+#include <iosfwd>
 
 namespace bsty::core
 {
@@ -29,6 +30,7 @@ namespace bsty::core
     };
 
     std::string to_string(Date const& date);
+    std::ostream& operator<<(std::ostream& out, Date const& date);
 
     struct Money
     {
@@ -47,6 +49,7 @@ namespace bsty::core
     };
 
     std::string to_string(Money const& money);
+    std::ostream& operator<<(std::ostream& out, Money const& money);
 
     struct Row
     {

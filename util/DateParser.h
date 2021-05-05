@@ -22,7 +22,7 @@ class DateParser
 
         explicit DateParser(char const* formatString="%d-%m-%Y");
 
-        std::optional<YearMonthDay> parse(std::string const& inputData);
+        std::optional<YearMonthDay> parse(std::string_view inputData);
 
     private:
         std::string const formatString_;

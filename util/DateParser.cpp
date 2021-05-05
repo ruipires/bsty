@@ -6,11 +6,11 @@ DateParser::DateParser(char const *formatString)
 {
 }
 
-std::optional<DateParser::YearMonthDay> DateParser::parse(std::string const &inputData)
+std::optional<DateParser::YearMonthDay> DateParser::parse(std::string_view inputData)
 {
     std::optional<YearMonthDay> result;
 
-    std::istringstream date{inputData};
+    std::istringstream date{inputData.data()};
     date::sys_time<date::days> tp;
     date >> date::parse(formatString_, tp);
     date::year_month_day x{tp};

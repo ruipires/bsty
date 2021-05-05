@@ -52,12 +52,7 @@ bsty::core::Data cgd::ContaOrdem::loadCsv(std::string const& filename, std::istr
     bsty::core::Data result;
     std::string tmp;
 
-    // TODO: use loadFileHeader here
-    for(int i = 0; i != 6; ++i)
-    {
-        std::getline(in_file, tmp);
-        spdlog::trace("Skipping over line #{}, contents:\"{}\"", i, tmp);
-    }
+    loadFileHeader(in_file, result);
 
     io::CSVReader<8, io::trim_chars<' ', '\t'>, io::no_quote_escape<';'>> in(filename, in_file);
     in.read_header(io::ignore_extra_column, "Data mov.", "Data valor", "Descrição", "Débito", "Crédito", "Saldo contabilístico", "Saldo disponível", "Categoria");
@@ -139,7 +134,7 @@ bool cgd::ContaOrdem::loadFileHeader(std::istream &inFile, bsty::core::Data &dat
                 auto value = util::parseCsvHeaderLineStatementDate(line);
                 if(value)
                 {
-                    //data.setReportDate() TODO: method needs to return a Date object
+                    data.setReportDate(*value);
                 }
 
                 break;
@@ -159,7 +154,7 @@ bool cgd::ContaOrdem::loadFileHeader(std::istream &inFile, bsty::core::Data &dat
                 auto value = util::parseCsvHeaderLineBeginningDate(line);
                 if(value)
                 {
-                    //data.setBeginDate() TODO: methods needs to return a date object
+                    data.setBeginDate(*value);
                 }
                 break;
             }
@@ -168,7 +163,7 @@ bool cgd::ContaOrdem::loadFileHeader(std::istream &inFile, bsty::core::Data &dat
                 auto value = util::parseCsvHeaderLineBeginningDate(line);
                 if(value)
                 {
-                    //data.setEndDate() TODO: methods needs to return a date object
+                    data.setEndDate(*value);
                 }
                 break;
             }
@@ -189,29 +184,31 @@ cgd::ContaOrdem::ContaOrdem(bsty::core::Data data)
 {
 }
 
-std::optional<std::string> cgd::util::parseCsvHeaderLineStatementDate(std::string const &str)
+std::optional<bsty::core::Date> cgd::util::parseCsvHeaderLineStatementDate(std::string_view sv)
 {
-    std::optional<std::string> result;
-
-    std::string_view sv(str);
+    std::optional<bsty::core::Date> result;
 
     auto pos = sv.find('-');
 
     if(pos != std::string::npos && (pos + 1 != sv.size()))
     {
-        auto contents = sv.substr(pos+1);
-        result = cgd::util::trim(contents);
+        auto const contents = sv.substr(pos+1);
+        auto const raw_date = cgd::util::trim(contents);
+        DateParser parser;
+        if(auto date = parser.parse(raw_date))
+        {
+            bsty::core::Date const convertedDate(date->year, date->month, date->day);
+            result = convertedDate;
+        }
     }
 
     return result;
 }
 
 std::optional<std::pair<std::string, std::string>>
-cgd::util::parseCsvHeaderLineAccountNumberAndDescription(std::string const &str)
+cgd::util::parseCsvHeaderLineAccountNumberAndDescription(std::string_view sv)
 {
     std::optional<std::pair<std::string, std::string>> result;
-
-    std::string_view sv(str);
 
     auto pos = sv.find(';');
     auto column1 = sv.substr(pos);
@@ -234,11 +231,9 @@ cgd::util::parseCsvHeaderLineAccountNumberAndDescription(std::string const &str)
 }
 
 
-std::optional<std::string> cgd::util::parseCsvHeaderLineBeginningDate(std::string const &str)
+std::optional<bsty::core::Date> cgd::util::parseCsvHeaderLineBeginningDate(std::string_view sv)
 {
-    std::optional<std::string> result;
-
-    std::string_view sv(str);
+    std::optional<bsty::core::Date> result;
 
     auto pos = sv.find(';');
 
@@ -246,18 +241,23 @@ std::optional<std::string> cgd::util::parseCsvHeaderLineBeginningDate(std::strin
     {
         auto contents = sv.substr(pos);
         contents.remove_prefix(1);
-        result = cgd::util::trim(contents);
+        auto const raw_date = cgd::util::trim(contents);
+
+        DateParser parser;
+        if(auto date = parser.parse(raw_date))
+        {
+            bsty::core::Date const convertedDate(date->year, date->month, date->day);
+            result = convertedDate;
+        }
     }
 
     return result;
 }
 
-std::optional<std::string> cgd::util::parseCsvHeaderLineEndingDate(std::string const &str)
+std::optional<bsty::core::Date> cgd::util::parseCsvHeaderLineEndingDate(std::string_view sv)
 {
     // TODO: remove code duplication with other parseCsvHeaderLine* methods
-    std::optional<std::string> result;
-
-    std::string_view sv(str);
+    std::optional<bsty::core::Date> result;
 
     auto pos = sv.find(';');
 
@@ -265,7 +265,14 @@ std::optional<std::string> cgd::util::parseCsvHeaderLineEndingDate(std::string c
     {
         auto contents = sv.substr(pos);
         contents.remove_prefix(1);
-        result = cgd::util::trim(contents);
+        auto const raw_date = cgd::util::trim(contents);
+
+        DateParser parser;
+        if(auto date = parser.parse(raw_date))
+        {
+            bsty::core::Date const convertedDate(date->year, date->month, date->day);
+            result = convertedDate;
+        }
     }
 
     return result;
