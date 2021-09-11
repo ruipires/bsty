@@ -2,6 +2,10 @@ cmake_minimum_required(VERSION 2.8.12)
 set(CMAKE_CXX_STANDARD 17)
 project(bsty CXX)
 
+# enable generation of compile_commands.json file
+# (currently cmake supports this for makefile and ninja generators only)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
 conan_basic_setup(TARGETS)
 

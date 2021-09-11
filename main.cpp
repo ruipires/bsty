@@ -6,7 +6,8 @@
 #include "cgd/ContaOrdem.h"
 
 void process_accounts(Configuration const& cfg);
-void process_account(std::string const& name, config::Account const& account);
+void process_account(std::string const& name, config::Account const& account, Configuration const& cfg);
+std::filesystem::path get_absolute_path(std::string const& account_folder, Configuration const& cfg);
 
 int main(int argc, char **argv)
 {
@@ -84,39 +85,81 @@ void process_accounts(Configuration const& cfg)
     }
 
     for(auto const& [name, account]: accounts)
-        process_account(name, account);
+        process_account(name, account, cfg);
 }
 
-void process_account(std::string const& name, config::Account const& account)
+void process_account(std::string const& name, config::Account const& account, Configuration const& cfg)
 {
     namespace fs = std::filesystem;
     spdlog::info("Processing account {}", name);
 
-    auto const dir = account.folder;
+    auto const dir = get_absolute_path(account.folder, cfg);
 
-    for (auto const& entry : fs::directory_iterator(dir))
-    {
-        auto const filename = entry.path().filename().string();
-        auto const fullpath = entry.path().string();
-        spdlog::info("* loading {}", filename);
-        spdlog::trace("  * fullpath:{}", fullpath);
-
-        auto co = cgd::ContaOrdem::loadFromCsv(fullpath);
-        auto const& data = co.getData();
-
-        spdlog::info("* account #{} \"{}\", statement taken on {}, covering {} to {}", *data.getAccountCode(),
-                                                                                       *data.getAccountDescription(),
-                                                                                       *data.getReportDate(),
-                                                                                       *data.getBeginDate(),
-                                                                                       *data.getEndDate());
-
-        for(auto const& row: data.getRows())
+    if(dir == fs::path())
+        spdlog::error("Unable to find account directory using data_folder:({}), account_folder ({}), cfg_file_location({})",
+                      cfg.data_folder(), account.folder, cfg.config_file_location().remove_filename());
+    else
+        for (auto const& entry : fs::directory_iterator(dir))
         {
-            spdlog::info("* date:'{}', payee:'{}' desc:'{}', in:'{}', out:'{}'",
-                         to_string(row.date),
-                         row.payee,
-                         row.memo,
-                         to_string(row.inflow),
-                         to_string(row.outflow)); }
+            auto const filename = entry.path().filename().string();
+            auto const full_path = entry.path().string();
+            spdlog::info("* loading {}", filename);
+            spdlog::trace("  * full_path:{}", full_path);
+
+            auto co = cgd::ContaOrdem::loadFromCsv(full_path);
+            auto const& data = co.getData();
+
+            spdlog::info("* account #{} \"{}\", statement taken on {}, covering {} to {}", *data.getAccountCode(),
+                                                                                           *data.getAccountDescription(),
+                                                                                           *data.getReportDate(),
+                                                                                           *data.getBeginDate(),
+                                                                                           *data.getEndDate());
+
+            for(auto const& row: data.getRows())
+            {
+                spdlog::info("* date:'{}', payee:'{}' desc:'{}', in:'{}', out:'{}'",
+                             to_string(row.date),
+                             row.payee,
+                             row.memo,
+                             to_string(row.inflow),
+                             to_string(row.outflow)); }
+        }
+}
+
+std::filesystem::path get_absolute_path(std::string const& account_folder, Configuration const& cfg)
+{
+    using std::filesystem::is_directory;
+    std::filesystem::path result;
+
+
+    // search for a valid path using the following rules/precedence
+    // 1 - account defines an absolute path representing an existing directory
+    // 2 - "data folder" configuration + account folder form a valid path representing an existing directory
+    // 3 - config file location + data folder + account folder form a valid path representing an existing directory
+
+    std::filesystem::path const account_folder_path(account_folder);
+
+    if(is_directory(account_folder_path) && account_folder_path.is_absolute()) // 1
+        result = account_folder_path;
+    else
+    {
+        // 2
+        std::filesystem::path const base_path(cfg.data_folder());
+        auto account_path = base_path / account_folder_path;
+
+        if(is_directory(account_path))
+            result = account_path;
+        else
+        {
+            // 3
+            auto const config_file_folder = cfg.config_file_location().remove_filename();
+
+            account_path = config_file_folder / base_path / account_folder_path;
+
+            if(is_directory(account_path))
+                result = account_path;
+        }
     }
+
+    return result;
 }

@@ -46,6 +46,7 @@ bool Configuration::load(char const *filename)
 
     if(input)
     {
+        save_config_file_location(filename);
         bool const allow_exceptions = true;
         bool const ignore_comments = true;
         data = json::parse(input, nullptr, allow_exceptions, ignore_comments);
@@ -112,6 +113,26 @@ std::vector<std::tuple<std::string, config::Account>> Configuration::accounts() 
         }
 
     return result;
+}
+
+std::string Configuration::data_folder() const
+{
+    std::string result;
+
+    if (data.contains("data folder"))
+        result = data["data folder"];
+
+    return result;
+}
+
+void Configuration::save_config_file_location(char const *filename)
+{
+    config_file_path = std::filesystem::path(filename);
+}
+
+std::filesystem::path Configuration::config_file_location() const
+{
+    return config_file_path;
 }
 
 std::string to_string(Configuration const &cfg)
