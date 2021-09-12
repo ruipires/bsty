@@ -19,7 +19,8 @@ int main(int argc, char **argv)
         options.add_options()
                 ("g,generate", "Generate configuration file (to config.json)")
                 ("c,config", "Configuration file name", cxxopts::value<std::string>()->default_value("config.json"))
-                ("v,verbose", "Verbose output", cxxopts::value<bool>()->default_value("true"))
+                ("v,verbose", "Verbose output (debug output)", cxxopts::value<bool>()->default_value("false"))
+                ("x,extra-verbose", "Extra verbose output (debug + trace output)", cxxopts::value<bool>()->default_value("false"))
                 ("h,help", "Print usage")
                 ;
         auto result = options.parse(argc, argv);
@@ -33,11 +34,18 @@ int main(int argc, char **argv)
         std::string const configurationFile = result["config"].as<std::string>();
         auto const generateConfig = result["generate"].as<bool>();
         auto const verbose = result["verbose"].as<bool>();
+        auto const trace = result["extra-verbose"].as<bool>();
 
         if(verbose)
         {
+            spdlog::set_level(spdlog::level::debug);
+            spdlog::debug("Verbose mode enabled (debug output will be visible)");
+        }
+
+        if(trace)
+        {
             spdlog::set_level(spdlog::level::trace);
-            spdlog::trace("Verbose mode enabled");
+            spdlog::debug("Extra verbose mode enabled (trace output will be visible)");
         }
 
         if(generateConfig)
@@ -109,15 +117,15 @@ void process_account(std::string const& name, config::Account const& account, Co
             auto co = cgd::ContaOrdem::loadFromCsv(full_path);
             auto const& data = co.getData();
 
-            spdlog::info("* account #{} \"{}\", statement taken on {}, covering {} to {}", *data.getAccountCode(),
+            spdlog::debug("* account #{} \"{}\", statement taken on {}, covering {} to {}", *data.getAccountCode(),
                                                                                            *data.getAccountDescription(),
-                                                                                           *data.getReportDate(),
-                                                                                           *data.getBeginDate(),
-                                                                                           *data.getEndDate());
+                                                                                               *data.getReportDate(),
+                                                                                               *data.getBeginDate(),
+                                                                                               *data.getEndDate());
 
             for(auto const& row: data.getRows())
             {
-                spdlog::info("* date:'{}', payee:'{}' desc:'{}', in:'{}', out:'{}'",
+                spdlog::trace("* date:'{}', payee:'{}' desc:'{}', in:'{}', out:'{}'",
                              to_string(row.date),
                              row.payee,
                              row.memo,

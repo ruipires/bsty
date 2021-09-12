@@ -95,16 +95,16 @@ bsty::core::Data cgd::ContaOrdem::loadCsv(std::string const& filename, std::istr
             if(!processingFileEnding)
             {
                 // at first invalid date, enter processing file ending mode
-                spdlog::info("Entered processing file ending mode");
+                spdlog::trace("Entered processing file ending mode");
                 processingFileEnding = true;
             }
         }
 
         if(processingFileEnding)
         {
-            spdlog::info("file ending line: {{ date_mov='{}', date_val='{}', desc='{}' outflow='{}', inflow='{}',"
-                         " balance='{}', available_balance='{}', category='{}' }}",
-                         raw_date_mov, raw_date_val, desc, outflow, inflow, balance, available_balance, category);
+            spdlog::trace("file ending line: {{ date_mov='{}', date_val='{}', desc='{}' outflow='{}', inflow='{}',"
+                          " balance='{}', available_balance='{}', category='{}' }}",
+                          raw_date_mov, raw_date_val, desc, outflow, inflow, balance, available_balance, category);
         }
     }
 
