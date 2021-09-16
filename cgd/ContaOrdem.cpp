@@ -300,3 +300,8 @@ std::string_view cgd::util::trim(std::string_view sv)
 {
     return trim_left(trim_right(sv));
 }
+
+bsty::core::Data cgd::ContaOrdemParser::loadFrom(std::string const &filename) const
+{
+    return ContaOrdem::loadFromCsv(filename).getData();
+}

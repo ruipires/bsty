@@ -4,6 +4,7 @@
 #include <string>
 #include <optional>
 #include "core/BstyData.h"
+#include "core/AccountStatementParser.h"
 
 namespace cgd
 {
@@ -23,6 +24,14 @@ namespace cgd
             static bool loadFileHeader(std::istream &inFile, bsty::core::Data &data);
 
             bsty::core::Data data;
+    };
+
+    class ContaOrdemParser: public bsty::core::AccountStatementParser
+    {
+        public:
+            ~ContaOrdemParser() override = default;
+
+            bsty::core::Data loadFrom(std::string const &filename) const override;
     };
 
     namespace util

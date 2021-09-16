@@ -3,10 +3,15 @@
 #include <fmt/ostream.h>
 #include <cxxopts.hpp>
 #include "Configuration.h"
+#include "core/ParserMapping.h"
 #include "cgd/ContaOrdem.h"
 
-void process_accounts(Configuration const& cfg);
-void process_account(std::string const& name, config::Account const& account, Configuration const& cfg);
+void process_accounts(Configuration const& cfg,
+                      bsty::core::ParserMapping const& parsers);
+void process_account(std::string const& name,
+                     config::Account const& account,
+                     Configuration const& cfg,
+                     bsty::core::ParserMapping const& parsers);
 std::filesystem::path get_absolute_path(std::string const& account_folder, Configuration const& cfg);
 
 int main(int argc, char **argv)
@@ -58,10 +63,13 @@ int main(int argc, char **argv)
             Configuration cfg;
             cfg.load(configurationFile);
 
+            bsty::core::ParserMapping parsers;
+            parsers.registerParser("cgd checking account", "csv", std::make_unique<cgd::ContaOrdemParser>());
+
             if(cfg)
             {
                 spdlog::trace("Configuration data ok");
-                process_accounts(cfg);
+                process_accounts(cfg, parsers);
             }
             else
                 spdlog::error("Error loading configuration data from {}", configurationFile);
@@ -77,7 +85,8 @@ int main(int argc, char **argv)
     }
 }
 
-void process_accounts(Configuration const& cfg)
+void process_accounts(Configuration const& cfg,
+                      bsty::core::ParserMapping const& parsers)
 {
     auto const accounts = cfg.accounts();
     std::vector<std::string> names;
@@ -93,13 +102,28 @@ void process_accounts(Configuration const& cfg)
     }
 
     for(auto const& [name, account]: accounts)
-        process_account(name, account, cfg);
+        process_account(name, account, cfg, parsers);
 }
 
-void process_account(std::string const& name, config::Account const& account, Configuration const& cfg)
+
+void process_account(std::string const& name,
+                     config::Account const& account,
+                     Configuration const& cfg,
+                     bsty::core::ParserMapping const& parsers)
 {
     namespace fs = std::filesystem;
     spdlog::info("Processing account {}", name);
+
+    auto const accountType = account.type;
+    auto const statementFormat = account.format;
+
+    auto const parser = parsers.getParser(accountType, statementFormat);
+
+    if(parser == nullptr)
+    {
+        spdlog::error("Unable to load parser for '{}' in '{}' format.", accountType, statementFormat);
+        return;
+    }
 
     auto const dir = get_absolute_path(account.folder, cfg);
 
@@ -114,23 +138,23 @@ void process_account(std::string const& name, config::Account const& account, Co
             spdlog::info("* loading {}", filename);
             spdlog::trace("  * full_path:{}", full_path);
 
-            auto co = cgd::ContaOrdem::loadFromCsv(full_path);
-            auto const& data = co.getData();
+            auto const &data = parser->loadFrom(full_path);
 
             spdlog::debug("* account #{} \"{}\", statement taken on {}, covering {} to {}", *data.getAccountCode(),
-                                                                                           *data.getAccountDescription(),
-                                                                                               *data.getReportDate(),
-                                                                                               *data.getBeginDate(),
-                                                                                               *data.getEndDate());
+                          *data.getAccountDescription(),
+                          *data.getReportDate(),
+                          *data.getBeginDate(),
+                          *data.getEndDate());
 
-            for(auto const& row: data.getRows())
+            for (auto const &row: data.getRows())
             {
                 spdlog::trace("* date:'{}', payee:'{}' desc:'{}', in:'{}', out:'{}'",
-                             to_string(row.date),
-                             row.payee,
-                             row.memo,
-                             to_string(row.inflow),
-                             to_string(row.outflow)); }
+                              to_string(row.date),
+                              row.payee,
+                              row.memo,
+                              to_string(row.inflow),
+                              to_string(row.outflow));
+            }
         }
 }
 

@@ -5,6 +5,11 @@
       "folder": "cgd_ordenado",
       "type": "cgd checking account",
       "format": "csv"
+    },
+    "cemah principal": {
+      "folder": "cemah",
+      "type": "cemah checking account",
+      "format": "xlsx"
     }
   }
 }

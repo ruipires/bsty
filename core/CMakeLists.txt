@@ -1,7 +1,9 @@
 project(bsty_core CXX)
 
 add_library(bsty_core
-            BstyData.h BstyData.cpp)
+            BstyData.h BstyData.cpp
+        AccountStatementParser.h
+        ParserMapping.cpp ParserMapping.h)
 
 target_include_directories(bsty_core PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
